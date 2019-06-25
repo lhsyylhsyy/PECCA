@@ -1,0 +1,36 @@
+#################################
+##Use CCA to find initial value##
+#################################
+CCA_initial<-function(x,y,B_constrain,A_constrain){
+  B_constrain=as.matrix(B_constrain);
+  A_constrain=as.matrix(A_constrain);
+  p=nrow(B_constrain);
+  q=nrow(A_constrain);
+  time=ncol(B_constrain);
+  if(sum(abs(B_constrain))==0){
+    result=cc(x,y);
+    A=result$ycoef[,1];
+    A=A/sqrt(sum(A*A));
+    B=result$xcoef[,1];
+    B=B/sqrt(sum(B*B));
+  }
+  if(sum(abs(B_constrain))>0){
+    P=diag(p)-B_constrain%*%solve(t(B_constrain)%*%B_constrain)%*%t(B_constrain);
+    Q=diag(q)-A_constrain%*%solve(t(A_constrain)%*%A_constrain)%*%t(A_constrain);
+    U=svd(P)$u;
+    V=svd(Q)$u;
+    tilde_U=U[,1:(p-time)];
+    tilde_V=V[,1:(q-time)];
+    ##Renew input xx and yy to get another pair of A and B##
+    x=x%*%tilde_U;
+    y=y%*%tilde_V;
+    result=cc(x,y);
+    A=result$ycoef[,1];
+    A=A/sqrt(sum(A*A));
+    B=result$xcoef[,1];
+    B=B/sqrt(sum(B*B));
+    B=tilde_U%*%B;
+    A=tilde_V%*%A;
+  }
+  return(list(B,A));
+}
